@@ -1,0 +1,11 @@
+ "use client";
+import { useEffect,useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { LogOut, Settings } from "lucide-react";
+import { formatBytes } from "@/lib/utils";
+
+export default function MePage(){const supabase=createClient();const [p,setP]=useState<any>(null);const [used,setUsed]=useState(0);
+ useEffect(()=>{(async()=>{const {data:{user}}=await supabase.auth.getUser();if(!user)return;const [a,b]=await Promise.all([supabase.from("profiles").select("*").eq("id",user.id).single(),supabase.from("transfers").select("file_size").eq("sender_id",user.id).neq("status","baton_dropped")]);setP(a.data);setUsed((b.data||[]).reduce((s:any,x:any)=>s+Number(x.file_size),0))})()},[]);
+ async function logout(){await supabase.auth.signOut();location.href="/login"}
+ if(!p)return <div>Loading profile…</div>;const limit=5*1024*1024*1024;const pct=Math.min(100,used/limit*100);
+ return <div className="mx-auto max-w-2xl"><div className="card p-6"><div className="flex items-center gap-4"><div className="grid h-20 w-20 place-items-center rounded-full bg-relay-orange text-2xl font-black text-white">{p.display_name?.[0]?.toUpperCase()}</div><div><h1 className="text-2xl font-black">{p.display_name}</h1><p className="text-relay-orange font-bold">@{p.username}</p></div></div><p className="mt-5 text-sm text-relay-muted">{p.bio||"Ready to pass a baton."}</p><div className="mt-7 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-relay-soft p-4"><p className="text-xs text-relay-muted">Total sent</p><p className="mt-1 text-2xl font-black">{p.total_sent}</p></div><div className="rounded-2xl bg-relay-soft p-4"><p className="text-xs text-relay-muted">Total received</p><p className="mt-1 text-2xl font-black">{p.total_received}</p></div></div><div className="mt-6"><div className="flex justify-between text-xs font-semibold"><span>Storage used</span><span>{formatBytes(used)} / 5 GB</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-relay-line"><div className="h-full rounded-full bg-relay-orange" style={{width:`${pct}%`}}/></div></div><div className="mt-7 flex gap-3"><button className="btn-secondary flex-1"><Settings size={17}/>Settings</button><button onClick={logout} className="btn-secondary flex-1"><LogOut size={17}/>Logout</button></div></div></div>}

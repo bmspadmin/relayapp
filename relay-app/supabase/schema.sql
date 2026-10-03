@@ -1,0 +1,4 @@
+-- RELAY schema was executed in the user's Supabase SQL Editor.
+-- Keep the executed migration in this repository for reproducibility.
+-- The SQL used in the setup is represented in the README and should be versioned
+-- from the successful migration in the project's history.

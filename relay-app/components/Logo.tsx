@@ -1,0 +1,2 @@
+import Link from "next/link";
+export function Logo(){return <Link href="/inbox" className="flex items-center gap-2 text-xl font-black tracking-tight"><span className="grid h-7 w-7 place-items-center rounded-lg bg-relay-orange text-xs text-white">R</span>RELAY</Link>}
