@@ -6,9 +6,7 @@ RELAY is a username-first private file delivery app. Instead of sharing public f
 
 - Next.js 14 App Router + TypeScript
 - Tailwind CSS
-- Supabase Auth, Postgres, RLS and Realtime
-- Cloudflare R2 private storage
-- AWS SDK presigned POST / signed downloads
+- Supabase Auth, Postgres, RLS, Realtime and private Storage
 - Vercel Cron
 
 ## Local setup
@@ -19,45 +17,27 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Fill `.env.local` with your Supabase and R2 credentials.
+Fill `.env.local` with your Supabase project URL and publishable key.
 
-### Supabase
+### Supabase Storage
 
-The database schema has already been designed for RELAY. If starting a new project, run the SQL migration in `supabase/schema.sql`.
+RELAY stores files in a private Supabase Storage bucket named `relay-files`.
 
-### R2
+Run `supabase/storage.sql` once in the Supabase SQL Editor. It creates the private bucket and policies that allow authenticated users to upload only into their own username folder, while only transfer participants can read a file.
 
-Create a private bucket called `relay-files`. Create R2 API credentials with object read/write access to this bucket.
+The browser uploads directly to Supabase using a short-lived signed upload token, so large files do not have to pass through the Next.js server.
 
-For browser presigned POST uploads, configure bucket CORS to allow your app origin. A development example:
+### Security model
 
-```json
-[
-  {
-    "AllowedOrigins": ["http://localhost:3000"],
-    "AllowedMethods": ["POST", "GET", "HEAD"],
-    "AllowedHeaders": ["*"],
-    "ExposeHeaders": ["ETag"],
-    "MaxAgeSeconds": 3600
-  }
-]
-```
-
-Set a lifecycle rule in R2 to delete objects after 10 days. RELAY also marks expired database transfers as `baton_dropped` through the Vercel cron endpoint.
-
-## Security model
-
-- R2 objects are private.
-- Browser uploads receive short-lived presigned POST fields.
+- Storage bucket is private.
+- Upload tokens are created only for authenticated users.
 - Downloads are issued only after the authenticated server verifies transfer ownership.
 - Download URLs expire after one hour.
 - Supabase RLS restricts transfer metadata to the sender/receiver.
-- Never expose an R2 secret or Supabase secret/service-role key to the browser.
+- Never expose a Supabase secret/service-role key to the browser.
 
-## GitHub
+## Deployment
 
-Push this project to `bmspadmin/relay`, then connect the repository to Vercel.
+The application lives under `relay-app/`; use that folder as the Vercel Root Directory.
 
-## Production environment variables
-
-See `.env.example`.
+See `.env.example` for production environment variables.
